@@ -13,9 +13,10 @@
             /* Transparent background so Canvas shows through perfectly */
             background-color: transparent; 
             margin: 0;
-            padding: 2px; /* Slight padding prevents border-box shadow clipping */
-            /* Prevent scrollbars inside the Canvas iframe */
+            padding: 2px; /* Slight padding prevents border shadow clipping */
+            /* Prevent scrollbars, but allow height expansion */
             overflow: hidden;
+            min-height: 100%;
         }
         
         /* Ensuring all inputs and child elements inherit the exact font requirements */
@@ -27,34 +28,35 @@
     </style>
 </head>
 <body>
-    <!-- Main Container: Light Grey (#F5F5F5), Border (#C7CDD1), Rounded 4px -->
-    <div class="bg-[#F5F5F5] border border-[#C7CDD1] rounded-[4px] flex flex-col md:flex-row items-center justify-between px-6 py-4 w-full shadow-sm" role="region" aria-label="Academic Week Calculator">
+    <!-- Main Container: Light Grey (#F5F5F5), Border (#C7CDD1), Rounded 4px 
+         Responsive: flex-col on mobile, flex-row on medium screens and up -->
+    <div class="bg-[#F5F5F5] border border-[#C7CDD1] rounded-[4px] flex flex-col md:flex-row md:items-center justify-between p-4 sm:px-6 w-full shadow-sm gap-4" role="region" aria-label="Academic Week Calculator">
         
-        <div class="flex flex-col mb-4 md:mb-0 w-full md:w-auto">
+        <div class="flex flex-col w-full md:w-auto">
             <!-- Title: Dark Blue (#002B6B), Bold -->
             <h2 class="font-bold text-[#002B6B] m-0 leading-tight">What week am I in?</h2>
             <!-- Subtitle: Accessible Dark Grey (#556572) -->
-            <p class="text-[#556572] m-0 mt-1">Fall Semester: Mon, Sep 7 – Fri, Dec 18, 2026</p>
+            <p class="text-[#556572] m-0 mt-1 sm:mt-0.5 text-[14px] sm:text-[16px]">Fall Semester: Mon, Sep 7 – Fri, Dec 18, 2026</p>
         </div>
 
-        <!-- gap-6 guarantees balanced spacing between internal elements and outer padding -->
-        <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+        <!-- Controls: Stacks vertically on very small screens, wraps naturally, aligns right on desktop -->
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 w-full md:w-auto justify-start md:justify-end">
             
             <!-- Date Picker Section -->
-            <div class="flex items-center gap-2">
-                <label for="datePicker" class="font-bold text-[#2D3B45]">Date:</label>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <label for="datePicker" class="font-bold text-[#2D3B45] whitespace-nowrap">Date:</label>
                 <input 
                     type="date" 
                     id="datePicker" 
-                    class="bg-white border border-[#C7CDD1] text-[#2D3B45] rounded-[4px] px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#002B6B] focus:border-transparent transition-all"
+                    class="bg-white border border-[#C7CDD1] text-[#2D3B45] rounded-[4px] px-3 py-1.5 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-[#002B6B] focus:border-transparent transition-all"
                     aria-label="Select Date"
                     aria-describedby="resultText"
                 >
             </div>
             
-            <!-- Result Box: White bg, Dark Grey Text (#2D3B45) as requested -->
-            <div aria-live="polite" aria-atomic="true" class="flex items-center">
-                <span id="resultText" class="bg-white border border-[#C7CDD1] text-[#2D3B45] font-bold px-4 py-1.5 rounded-[4px] min-w-[110px] text-center shadow-sm">
+            <!-- Result Box: White bg, Dark Grey Text (#2D3B45), Thin border -->
+            <div aria-live="polite" aria-atomic="true" class="flex items-center w-full sm:w-auto">
+                <span id="resultText" class="bg-white border border-[#C7CDD1] text-[#2D3B45] font-bold px-4 py-1.5 rounded-[4px] w-full sm:min-w-[110px] text-center shadow-sm">
                     --
                 </span>
             </div>
@@ -106,8 +108,7 @@
                 } else if (selected > end) {
                     resultText.textContent = "Term Ended";
                 } else {
-                    // Standard week calculation logic
-                    // Since start date is a Monday, every 7 days increment naturally lands on the next Monday
+                    // Standard week calculation logic (Monday Start)
                     const diffTime = selected - start;
                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                     const weekNumber = Math.floor(diffDays / 7) + 1;
