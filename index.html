@@ -3,116 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Week Calculator Widget</title>
+    <title>Canvas Week Widget</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            /* Strict reset to remove all outer spacing and prevent scrollbars */
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: transparent;
-            font-family: Arial, sans-serif;
-            box-sizing: border-box;
-        }
+        /* Changed overflow to auto so mobile can scroll */
+        body { font-family: Arial, sans-serif; background-color: transparent; overflow-y: auto; overflow-x: hidden; margin: 0; padding: 0; }
+        .canvas-border { border: 1px solid #C7CDD1; border-radius: 4px; }
         
-        *, *::before, *::after {
-            box-sizing: inherit;
-        }
-
-        /* Enforce native date picker styling to stay compact */
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-        }
+        /* Optional: Makes the scrollbar look clean and modern */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #C7CDD1; border-radius: 10px; }
     </style>
 </head>
-<body>
-    <!-- 
-        Main Container:
-        - w-full (100% width, no max-width)
-        - p-2 (Tight padding to keep height minimal)
-        - Flex column on mobile, Flex row on desktop (md:) 
-    -->
-    <div class="w-full bg-[#F5F5F5] border border-[#C7CDD1] rounded-[4px] px-3 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
+<body class="flex items-center justify-center p-1">
+    <div class="w-full canvas-border bg-[#F5F5F5] p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 box-border">
         
-        <!-- Left Side: Title and Subtitle -->
-        <div class="flex flex-col justify-center">
+        <!-- Left Side: Text -->
+        <div class="flex flex-col">
             <h2 class="text-[16px] font-bold text-[#00205C] m-0 leading-tight">What week am I in?</h2>
-            <p class="text-[14px] text-[#556572] m-0 mt-0.5 leading-tight">Fall Semester: Mon, Sep 7 – Fri, Dec 18, 2026</p>
+            <p class="text-[14px] text-[#556572] m-0 mt-1">Fall Semester: Mon, Sep 7 – Fri, Dec 18, 2026</p>
         </div>
-
-        <!-- Right Side: Date Picker and Result (Forced to stay horizontal even on mobile) -->
-        <div class="flex flex-row items-center gap-2">
-            
+        
+        <!-- Right Side: Date & Result -->
+        <div class="flex flex-row flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
             <div class="flex items-center gap-2">
-                <label for="datePicker" class="text-[16px] text-[#2D3B45] m-0 font-normal">Date:</label>
-                <input 
-                    type="date" 
-                    id="datePicker" 
-                    class="bg-white border border-[#C7CDD1] text-[#2D3B45] text-[16px] h-[36px] px-2 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-[#00205C]"
-                    aria-label="Select Date"
-                >
+                <label for="datePicker" class="text-[16px] text-[#2D3B45] font-normal">Date:</label>
+                <input type="date" id="datePicker" class="canvas-border bg-white text-[16px] text-[#2D3B45] px-2 py-1 h-[36px] outline-none focus:ring-2 focus:ring-[#00205C]">
             </div>
-            
-            <div 
-                id="resultText" 
-                class="bg-white border border-[#C7CDD1] text-[#2D3B45] font-bold text-[16px] h-[36px] px-4 rounded-[4px] flex items-center justify-center whitespace-nowrap min-w-[85px] shadow-sm"
-                aria-live="polite"
-            >
-                --
+            <div id="resultText" class="canvas-border bg-white text-[16px] text-[#2D3B45] font-bold px-4 h-[36px] flex items-center justify-center whitespace-nowrap min-w-[80px]">
+                Week 5
             </div>
-            
         </div>
 
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const datePicker = document.getElementById('datePicker');
-            const resultText = document.getElementById('resultText');
+        const startDate = new Date('2026-09-07T00:00:00');
+        const endDate = new Date('2026-12-18T23:59:59');
+        const datePicker = document.getElementById('datePicker');
+        const resultText = document.getElementById('resultText');
 
-            // Exact semester start and end dates
-            const startYear = 2026, startMonth = 8, startDay = 7;   // Sep is month 8 in JS (0-indexed)
-            const endYear = 2026, endMonth = 11, endDay = 18;       // Dec is month 11 in JS
+        function calculateWeek(selectedDate) {
+            const date = new Date(selectedDate + 'T00:00:00');
+            if (date < startDate) return "Not Started";
+            if (date > endDate) return "Term Ended";
+            const diffTime = Math.abs(date - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const weekNumber = Math.floor(diffDays / 7) + 1;
+            return "Week " + weekNumber;
+        }
 
-            // Create Date objects (midnight local time)
-            const startDate = new Date(startYear, startMonth, startDay);
-            const endDate = new Date(endYear, endMonth, endDay, 23, 59, 59);
-
-            function calculateWeek(dateString) {
-                if (!dateString) return "--";
-
-                // Parse input date string (YYYY-MM-DD) strictly as local time
-                const [y, m, d] = dateString.split('-');
-                const selectedDate = new Date(y, m - 1, d);
-
-                // Check bounds
-                if (selectedDate < startDate) return "Not Started";
-                if (selectedDate > endDate) return "Term Ended";
-
-                // Calculate difference in days
-                const diffTime = selectedDate.getTime() - startDate.getTime();
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                // Calculate week number (1-based)
-                const weekNumber = Math.floor(diffDays / 7) + 1;
-                return "Week " + weekNumber;
-            }
-
-            // Listen for user changes
-            datePicker.addEventListener('change', (e) => {
+        datePicker.addEventListener('change', (e) => {
+            if (e.target.value) {
                 resultText.textContent = calculateWeek(e.target.value);
-            });
-
-            // Populate today's date automatically on load
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            
-            datePicker.value = `${yyyy}-${mm}-${dd}`;
-            resultText.textContent = calculateWeek(datePicker.value);
+            }
         });
+
+        // Set default date
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        datePicker.value = `${year}-${month}-${day}`;
+        resultText.textContent = calculateWeek(datePicker.value);
     </script>
 </body>
 </html>
