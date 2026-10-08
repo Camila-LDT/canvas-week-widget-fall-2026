@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week Calculator Banner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f5; /* Subtle background to make the white widget stand out */
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Compact, horizontal banner container matching Canvas module styling -->
+        <div class="flex flex-col sm:flex-row items-center justify-between border border-gray-300 bg-white rounded-md p-4 shadow-sm border-l-4 border-l-[#002B6B]">
+            
+            <!-- Left side: Title and context -->
+            <div class="flex items-center gap-3 mb-4 sm:mb-0 w-full sm:w-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#002B6B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <div>
+                    <h2 class="text-lg font-bold text-[#002B6B] leading-tight">What week am I in?</h2>
+                    <p class="text-xs text-gray-500">Semester: Mon, Sep 7 – Fri, Dec 11, 2026</p>
+                </div>
+            </div>
+
+            <!-- Right side: Date picker and Result display -->
+            <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="flex items-center gap-2">
+                    <label for="datePicker" class="text-sm font-medium text-gray-700 hidden sm:block">Date:</label>
+                    <input 
+                        type="date" 
+                        id="datePicker" 
+                        class="border border-gray-300 text-sm text-gray-700 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#002B6B] focus:border-[#002B6B]"
+                    >
+                </div>
+                
+                <!-- Dynamic result badge -->
+                <div id="resultBadge" class="px-4 py-1.5 rounded font-bold text-sm min-w-[140px] text-center transition-colors duration-200">
+                    <!-- Week calculation output goes here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const datePicker = document.getElementById('datePicker');
+            const resultBadge = document.getElementById('resultBadge');
+
+            // Hardcoded semester boundaries
+            const startDateStr = '2026-09-07'; // Monday, Sept 7, 2026
+            const endDateStr = '2026-12-11';   // Friday, Dec 11, 2026
+
+            // Helper function to safely parse YYYY-MM-DD in local time
+            // to avoid timezone offset bugs that might shift the date backwards by a day
+            const parseLocalDate = (dateStr) => {
+                const [year, month, day] = dateStr.split('-');
+                return new Date(year, month - 1, day);
+            };
+
+            const startDate = parseLocalDate(startDateStr);
+            const endDate = parseLocalDate(endDateStr);
+
+            // Initialize with today's date
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            datePicker.value = `${yyyy}-${mm}-${dd}`;
+
+            function calculateWeek() {
+                if (!datePicker.value) {
+                    resultBadge.textContent = "Select a date";
+                    resultBadge.className = "px-4 py-1.5 rounded font-medium text-sm min-w-[140px] text-center bg-gray-100 text-gray-600 border border-gray-200";
+                    return;
+                }
+
+                const selectedDate = parseLocalDate(datePicker.value);
+
+                // Strip the time portions for accurate day comparisons
+                const start = startDate.getTime();
+                const end = endDate.getTime();
+                const selected = selectedDate.getTime();
+
+                if (selected < start) {
+                    resultBadge.textContent = "Hasn't started";
+                    resultBadge.className = "px-4 py-1.5 rounded font-medium text-sm min-w-[140px] text-center bg-amber-50 text-amber-700 border border-amber-200";
+                } else if (selected > end) {
+                    resultBadge.textContent = "Semester ended";
+                    resultBadge.className = "px-4 py-1.5 rounded font-medium text-sm min-w-[140px] text-center bg-gray-100 text-gray-600 border border-gray-200";
+                } else {
+                    // Calculate difference in days
+                    const diffTime = selected - start;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    // Divide by 7 and add 1 for the week number
+                    const weekNumber = Math.floor(diffDays / 7) + 1;
+                    
+                    // Cap at 14 weeks just in case
+                    const finalWeek = Math.min(weekNumber, 14);
+
+                    resultBadge.textContent = `Week ${finalWeek}`;
+                    resultBadge.className = "px-4 py-1.5 rounded font-bold text-sm min-w-[140px] text-center bg-[#002B6B] text-white shadow-sm";
+                }
+            }
+
+            // Run calculation on load and whenever the input changes
+            calculateWeek();
+            datePicker.addEventListener('change', calculateWeek);
+        });
+    </script>
+</body>
+</html>
