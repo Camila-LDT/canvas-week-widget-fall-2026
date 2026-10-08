@@ -1,72 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canvas Week Widget</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Changed overflow to auto so mobile can scroll */
-        body { font-family: Arial, sans-serif; background-color: transparent; overflow-y: auto; overflow-x: hidden; margin: 0; padding: 0; }
-        .canvas-border { border: 1px solid #C7CDD1; border-radius: 4px; }
-        
-        /* Optional: Makes the scrollbar look clean and modern */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #C7CDD1; border-radius: 10px; }
-    </style>
-</head>
-<body class="flex items-center justify-center p-1">
-    <div class="w-full canvas-border bg-[#F5F5F5] p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 box-border">
-        
-        <!-- Left Side: Text -->
-        <div class="flex flex-col">
-            <h2 class="text-[16px] font-bold text-[#00205C] m-0 leading-tight">What week am I in?</h2>
-            <p class="text-[14px] text-[#556572] m-0 mt-1">Fall Semester: Mon, Sep 7 – Fri, Dec 18, 2026</p>
-        </div>
-        
-        <!-- Right Side: Date & Result -->
-        <div class="flex flex-row flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-            <div class="flex items-center gap-2">
-                <label for="datePicker" class="text-[16px] text-[#2D3B45] font-normal">Date:</label>
-                <input type="date" id="datePicker" class="canvas-border bg-white text-[16px] text-[#2D3B45] px-2 py-1 h-[36px] outline-none focus:ring-2 focus:ring-[#00205C]">
-            </div>
-            <div id="resultText" class="canvas-border bg-white text-[16px] text-[#2D3B45] font-bold px-4 h-[36px] flex items-center justify-center whitespace-nowrap min-w-[80px]">
-                Week 5
-            </div>
-        </div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Week Widget</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
 
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;              /* no scrollbar, ever */
+      background: transparent;
+      font-family: Arial, sans-serif;
+    }
+
+    body { padding: 4px; }
+
+    .widget {
+      height: 100%;                  /* card fills the iframe, so no blank gap */
+      display: flex;
+      flex-wrap: wrap;               /* wraps naturally, no breakpoint needed */
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px 12px;
+      padding: 8px 12px;
+      background: #F5F5F5;
+      border: 1px solid #C7CDD1;
+      border-radius: 4px;
+    }
+
+    .text { flex: 1 1 220px; min-width: 0; }
+
+    h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      color: #00205C;
+    }
+
+    .term {
+      margin: 2px 0 0;
+      font-size: 13px;
+      line-height: 1.3;
+      color: #556572;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 1 auto;
+    }
+
+    label { font-size: 16px; color: #2D3B45; }
+
+    /* 16px font on inputs prevents iOS Safari from zooming on focus */
+    input[type="date"], .result {
+      height: 36px;
+      font: inherit;
+      font-size: 16px;
+      color: #2D3B45;
+      background: #fff;
+      border: 1px solid #C7CDD1;
+      border-radius: 4px;
+    }
+
+    input[type="date"] { padding: 0 8px; min-width: 0; }
+    input[type="date"]:focus { outline: 2px solid #00205C; outline-offset: 1px; }
+
+    .result {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      min-width: 80px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    /* Very small phones: let the date field shrink so the row stays on one line */
+    @media (max-width: 360px) {
+      label { display: none; }
+      .controls { width: 100%; }
+      input[type="date"] { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="text">
+      <h2>What week am I in?</h2>
+      <p class="term">Fall Semester: Mon, Sep 7 – Fri, Dec 18, 2026</p>
     </div>
 
-    <script>
-        const startDate = new Date('2026-09-07T00:00:00');
-        const endDate = new Date('2026-12-18T23:59:59');
-        const datePicker = document.getElementById('datePicker');
-        const resultText = document.getElementById('resultText');
+    <div class="controls">
+      <label for="datePicker">Date:</label>
+      <input type="date" id="datePicker">
+      <div id="resultText" class="result" role="status" aria-live="polite">Week 5</div>
+    </div>
+  </div>
 
-        function calculateWeek(selectedDate) {
-            const date = new Date(selectedDate + 'T00:00:00');
-            if (date < startDate) return "Not Started";
-            if (date > endDate) return "Term Ended";
-            const diffTime = Math.abs(date - startDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const weekNumber = Math.floor(diffDays / 7) + 1;
-            return "Week " + weekNumber;
-        }
+  <script>
+    // Use UTC for all math so daylight saving time can't shift the day count
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    const START = Date.UTC(2026, 8, 7);    // Mon, Sep 7, 2026 (month is 0-indexed)
+    const END   = Date.UTC(2026, 11, 18);  // Fri, Dec 18, 2026
 
-        datePicker.addEventListener('change', (e) => {
-            if (e.target.value) {
-                resultText.textContent = calculateWeek(e.target.value);
-            }
-        });
+    const datePicker = document.getElementById('datePicker');
+    const resultText = document.getElementById('resultText');
 
-        // Set default date
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        datePicker.value = `${year}-${month}-${day}`;
-        resultText.textContent = calculateWeek(datePicker.value);
-    </script>
+    function calculateWeek(value) {        // value looks like "2026-10-08"
+      const [y, m, d] = value.split('-').map(Number);
+      const date = Date.UTC(y, m - 1, d);
+
+      if (date < START) return 'Not Started';
+      if (date > END)   return 'Term Ended';
+
+      const days = Math.round((date - START) / MS_PER_DAY);
+      return 'Week ' + (Math.floor(days / 7) + 1);
+    }
+
+    function update() {
+      resultText.textContent = datePicker.value
+        ? calculateWeek(datePicker.value)
+        : 'Pick a date';
+    }
+
+    // 'input' fires as the user types or picks; 'change' covers older browsers
+    datePicker.addEventListener('input', update);
+    datePicker.addEventListener('change', update);
+
+    // Default to today's local date
+    const t = new Date();
+    datePicker.value =
+      t.getFullYear() + '-' +
+      String(t.getMonth() + 1).padStart(2, '0') + '-' +
+      String(t.getDate()).padStart(2, '0');
+    update();
+  </script>
 </body>
 </html>
